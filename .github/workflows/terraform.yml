@@ -40,7 +40,13 @@ jobs:
       - run: terraform validate
 
       - id: plan
-        run: terraform plan -no-color -input=false -out=tfplan | tee plan.txt
+        # Default shell has no `pipefail`, so `| tee`'s exit code would mask a
+        # real terraform failure — capture terraform's own code explicitly.
+        # 2>&1 so error detail (stderr) actually lands in plan.txt, not just
+        # the one-line "Planning failed" summary.
+        run: |
+          terraform plan -no-color -input=false -out=tfplan 2>&1 | tee plan.txt
+          exit ${PIPESTATUS[0]}
         continue-on-error: true
 
       - name: Post plan to PR
