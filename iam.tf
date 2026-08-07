@@ -19,14 +19,16 @@ resource "google_storage_bucket_iam_member" "cloud_build_bucket_reader" {
 }
 
 resource "google_project_iam_member" "cloud_build_log_writer" {
-  project = var.project_id
-  role    = "roles/logging.logWriter"
-  member  = "serviceAccount:${google_service_account.cloud_build.email}"
+  project    = var.project_id
+  role       = "roles/logging.logWriter"
+  member     = "serviceAccount:${google_service_account.cloud_build.email}"
+  depends_on = [google_project_service.cloudresourcemanager]
 }
 
 # 3. Grant Compute Load Balancer Admin (For CDN cache invalidation)
 resource "google_project_iam_member" "cloud_build_load_balancer_admin" {
-  project = var.project_id
-  role    = "roles/compute.loadBalancerAdmin"
-  member  = "serviceAccount:${google_service_account.cloud_build.email}"
+  project    = var.project_id
+  role       = "roles/compute.loadBalancerAdmin"
+  member     = "serviceAccount:${google_service_account.cloud_build.email}"
+  depends_on = [google_project_service.cloudresourcemanager]
 }
