@@ -29,6 +29,16 @@ resource "google_service_account_iam_member" "github_ci_act_as_function_runtime"
   member             = "serviceAccount:${module.github_ci.service_account_email}"
 }
 
+# Terraform itself (running as terraform-ci) also needs actAs on this SA —
+# creating google_cloudfunctions2_function with service_account_email set
+# requires the *caller* to have iam.serviceaccounts.actAs, separate from the
+# grant above which only covers the app repo's own CI-driven redeploys.
+resource "google_service_account_iam_member" "terraform_ci_act_as_function_runtime" {
+  service_account_id = google_service_account.function_runtime.name
+  role               = "roles/iam.serviceAccountUser"
+  member             = "serviceAccount:${var.terraform_ci_service_account_email}"
+}
+
 # --- Extend the repo-wide terraform-ci SA (../iam.tf) so it can manage the
 # resource types this subfolder introduces. Declared here, not in the root
 # state, to keep this app's infra additions self-contained. ---
@@ -73,5 +83,6 @@ resource "time_sleep" "terraform_ci_iam_propagation" {
     google_project_iam_member.terraform_ci_run_admin,
     google_project_iam_member.terraform_ci_artifactregistry_admin,
     google_project_iam_member.terraform_ci_secretmanager_admin,
+    google_service_account_iam_member.terraform_ci_act_as_function_runtime,
   ]
 }
