@@ -60,3 +60,18 @@ resource "google_project_iam_member" "terraform_ci_secretmanager_admin" {
   member     = "serviceAccount:${var.terraform_ci_service_account_email}"
   depends_on = [google_project_service.this]
 }
+
+# IAM grants are eventually consistent — the very first apply that grants
+# terraform-ci these roles also needs to *use* them (creating the AR repo,
+# the secret, the function) in the same run. Without a buffer, those calls
+# can 403 before the policy has propagated. Anything created below that
+# relies on the four admin roles above depends on this.
+resource "time_sleep" "terraform_ci_iam_propagation" {
+  create_duration = "60s"
+  depends_on = [
+    google_project_iam_member.terraform_ci_cloudfunctions_admin,
+    google_project_iam_member.terraform_ci_run_admin,
+    google_project_iam_member.terraform_ci_artifactregistry_admin,
+    google_project_iam_member.terraform_ci_secretmanager_admin,
+  ]
+}

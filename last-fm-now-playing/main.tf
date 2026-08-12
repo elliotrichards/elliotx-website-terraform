@@ -41,7 +41,7 @@ module "artifact_registry" {
     "serviceAccount:${module.github_ci.service_account_email}",
   ]
 
-  depends_on = [google_project_service.this]
+  depends_on = [google_project_service.this, time_sleep.terraform_ci_iam_propagation]
 }
 
 module "secret" {
@@ -56,7 +56,7 @@ module "secret" {
     "serviceAccount:${module.github_ci.service_account_email}",
   ]
 
-  depends_on = [google_project_service.this]
+  depends_on = [google_project_service.this, time_sleep.terraform_ci_iam_propagation]
 }
 
 module "cloud_function" {
@@ -75,5 +75,5 @@ module "cloud_function" {
     LASTFM_SECRET_NAME = module.secret.secret_id
   }
 
-  depends_on = [google_project_service.this]
+  depends_on = [google_project_service.this, time_sleep.terraform_ci_iam_propagation]
 }

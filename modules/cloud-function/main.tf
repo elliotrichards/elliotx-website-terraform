@@ -36,9 +36,19 @@ data "archive_file" "placeholder_source" {
 }
 
 resource "google_storage_bucket_object" "placeholder_source" {
-  name   = "source/${data.archive_file.placeholder_source.output_md5}.zip"
+  # A static name, not one derived from output_md5: the archive provider
+  # doesn't produce byte-identical zips across runs for inline `source`
+  # content blocks (it embeds a timestamp), so an md5-derived name would
+  # force a replace on every single plan/apply forever. This object is
+  # bootstrap-only anyway — ignore_changes below means it's never touched
+  # again after the first successful create.
+  name   = "source/placeholder.zip"
   bucket = google_storage_bucket.source.name
   source = data.archive_file.placeholder_source.output_path
+
+  lifecycle {
+    ignore_changes = all
+  }
 }
 
 resource "google_cloudfunctions2_function" "this" {
