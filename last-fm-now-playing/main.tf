@@ -20,6 +20,10 @@ resource "google_project_service" "this" {
   disable_on_destroy = false
 }
 
+data "google_project" "this" {
+  project_id = var.project_id
+}
+
 # Runtime identity for the Cloud Function — only granted secretAccessor on
 # its own secret below, nothing project-wide.
 resource "google_service_account" "function_runtime" {
