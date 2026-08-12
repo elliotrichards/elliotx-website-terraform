@@ -39,6 +39,16 @@ resource "google_service_account_iam_member" "terraform_ci_act_as_function_runti
   member             = "serviceAccount:${var.terraform_ci_service_account_email}"
 }
 
+# Cloud Functions gen2's underlying build step falls back to the project's
+# default Compute Engine service account unless build_config.service_account
+# is set — which we don't, to avoid re-scoping our own runtime SA into a
+# build identity. So the deployer needs actAs on that default SA too.
+resource "google_service_account_iam_member" "terraform_ci_act_as_compute_default" {
+  service_account_id = "projects/${var.project_id}/serviceAccounts/${data.google_project.this.number}-compute@developer.gserviceaccount.com"
+  role               = "roles/iam.serviceAccountUser"
+  member             = "serviceAccount:${var.terraform_ci_service_account_email}"
+}
+
 # --- Extend the repo-wide terraform-ci SA (../iam.tf) so it can manage the
 # resource types this subfolder introduces. Declared here, not in the root
 # state, to keep this app's infra additions self-contained. ---
@@ -84,5 +94,6 @@ resource "time_sleep" "terraform_ci_iam_propagation" {
     google_project_iam_member.terraform_ci_artifactregistry_admin,
     google_project_iam_member.terraform_ci_secretmanager_admin,
     google_service_account_iam_member.terraform_ci_act_as_function_runtime,
+    google_service_account_iam_member.terraform_ci_act_as_compute_default,
   ]
 }
