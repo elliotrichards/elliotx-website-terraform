@@ -12,7 +12,11 @@ resource "google_secret_manager_secret" "this" {
 }
 
 resource "google_secret_manager_secret_iam_member" "accessor" {
-  for_each  = toset(var.accessor_members)
+  # Keyed by index, not toset(var.accessor_members): members are often SA
+  # emails not known until apply, and for_each requires its *keys* known at
+  # plan time even if values aren't — a list index is known, the member
+  # string may not be.
+  for_each  = { for idx, member in var.accessor_members : idx => member }
   project   = var.project_id
   secret_id = google_secret_manager_secret.this.secret_id
   role      = "roles/secretmanager.secretAccessor"
@@ -20,7 +24,7 @@ resource "google_secret_manager_secret_iam_member" "accessor" {
 }
 
 resource "google_secret_manager_secret_iam_member" "version_manager" {
-  for_each  = toset(var.version_manager_members)
+  for_each  = { for idx, member in var.version_manager_members : idx => member }
   project   = var.project_id
   secret_id = google_secret_manager_secret.this.secret_id
   role      = "roles/secretmanager.secretVersionManager"

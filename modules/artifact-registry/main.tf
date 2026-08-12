@@ -7,7 +7,11 @@ resource "google_artifact_registry_repository" "this" {
 }
 
 resource "google_artifact_registry_repository_iam_member" "writer" {
-  for_each   = toset(var.writer_members)
+  # Keyed by index, not toset(var.writer_members): members are often SA
+  # emails not known until apply (e.g. a sibling module's service account),
+  # and for_each requires its *keys* to be known at plan time even if values
+  # aren't — a list index is known, the member string may not be.
+  for_each   = { for idx, member in var.writer_members : idx => member }
   project    = google_artifact_registry_repository.this.project
   location   = google_artifact_registry_repository.this.location
   repository = google_artifact_registry_repository.this.repository_id
@@ -16,7 +20,7 @@ resource "google_artifact_registry_repository_iam_member" "writer" {
 }
 
 resource "google_artifact_registry_repository_iam_member" "reader" {
-  for_each   = toset(var.reader_members)
+  for_each   = { for idx, member in var.reader_members : idx => member }
   project    = google_artifact_registry_repository.this.project
   location   = google_artifact_registry_repository.this.location
   repository = google_artifact_registry_repository.this.repository_id
