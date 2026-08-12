@@ -38,3 +38,6 @@ pnpm-debug.log*
 *.tfstate.*
 .terraform/
 
+# Generated placeholder source zip for the last-fm-now-playing Cloud Function
+modules/cloud-function/*.zip
+
