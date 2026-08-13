@@ -1,32 +1,45 @@
-# CI identity for the app repo (var.function_source_repo) to build the
-# container image, push it to Artifact Registry, and deploy the function.
-module "github_ci" {
-  source      = "../modules/github-oidc"
+# Shared WIF pool for the whole apps repo (var.apps_github_repo) — trust is
+# repo-scoped, not path-scoped, so this is created once here (the first app)
+# and future app folders reference module.github_oidc_pool.pool_name by
+# passing it into their own github-ci-service-account module call, rather
+# than each creating their own pool.
+module "github_oidc_pool" {
+  source      = "../modules/github-oidc-pool"
   project_id  = var.project_id
-  pool_id     = "now-playing-github-pool"
-  provider_id = "now-playing-github-provider"
-  github_repo = var.function_source_repo
+  pool_id     = "apps-github-pool"
+  provider_id = "apps-github-provider"
+  github_repo = var.apps_github_repo
+
+  depends_on = [google_project_service.this]
+}
+
+# This app's own deploy identity, bound to the shared pool above.
+module "now_playing_ci" {
+  source      = "../modules/github-ci-service-account"
+  project_id  = var.project_id
+  pool_name   = module.github_oidc_pool.pool_name
+  github_repo = var.apps_github_repo
 
   service_account_id           = "now-playing-ci"
   service_account_display_name = "NowPlaying CI (GitHub Actions)"
 
   # artifactregistry.writer (module.artifact_registry) and
   # secretmanager.secretVersionManager (module.secret) are granted directly
-  # on those resources, not project-wide.
+  # on those resources, not project-wide. No Cloud Build involved — GitHub
+  # Actions runs `docker build`/`docker push` itself and deploys the image
+  # directly, so just run.developer to deploy the Cloud Run service.
   project_role_grants = [
-    "roles/cloudfunctions.developer",
     "roles/run.developer",
-    "roles/cloudbuild.builds.editor",
   ]
 
   depends_on = [google_project_service.this]
 }
 
-# Lets the CI SA deploy new revisions running as the function's runtime SA.
+# Lets the CI SA deploy new revisions running as the service's runtime SA.
 resource "google_service_account_iam_member" "github_ci_act_as_function_runtime" {
   service_account_id = google_service_account.function_runtime.name
   role               = "roles/iam.serviceAccountUser"
-  member             = "serviceAccount:${module.github_ci.service_account_email}"
+  member             = "serviceAccount:${module.now_playing_ci.service_account_email}"
 }
 
 # Terraform itself (running as terraform-ci) also needs actAs on this SA —

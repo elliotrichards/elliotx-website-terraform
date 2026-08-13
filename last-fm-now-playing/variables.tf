@@ -10,15 +10,9 @@ variable "region" {
   default     = "us-west1"
 }
 
-variable "function_name" {
+variable "service_name" {
   type    = string
   default = "lastfm-now-playing"
-}
-
-variable "function_entry_point" {
-  type        = string
-  description = "Exported function name the Node.js source must expose"
-  default     = "nowPlaying"
 }
 
 variable "secret_id" {
@@ -27,15 +21,20 @@ variable "secret_id" {
   default     = "lastfm-api-key"
 }
 
+variable "lastfm_username" {
+  type        = string
+  description = "last.fm username to query recent tracks for. Public data, not a secret — kept out of app source so it's not hardcoded."
+}
+
 variable "artifact_registry_repository_id" {
   type    = string
   default = "now-playing"
 }
 
-variable "function_source_repo" {
+variable "apps_github_repo" {
   type        = string
-  description = "owner/repo hosting the Node.js function source and its GitHub Actions deploy workflow. This is the WIF trust boundary for the CI service account below — update it once the repo exists."
-  default     = "elliotrichards/last-fm-now-playing"
+  description = "owner/repo hosting this and future apps' source + GitHub Actions deploy workflows. This is the WIF trust boundary for the whole shared pool below (module.github_oidc_pool) — trust is repo-scoped, not path-scoped, so every app in this repo shares the pool and gets its own service account."
+  default     = "elliotrichards/elliotx-website-apps"
 }
 
 variable "terraform_ci_service_account_email" {
