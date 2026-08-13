@@ -20,7 +20,7 @@ resource "google_project_service" "this" {
 resource "google_service_account" "function_runtime" {
   project      = var.project_id
   account_id   = "lastfm-now-playing-fn"
-  display_name = "NowPlaying Cloud Function runtime"
+  display_name = "NowPlaying Cloud Run runtime"
   depends_on   = [google_project_service.this]
 }
 
@@ -30,10 +30,10 @@ module "artifact_registry" {
   location      = var.region
   repository_id = var.artifact_registry_repository_id
   format        = "DOCKER"
-  description   = "Container images for the NowPlaying (last.fm) Cloud Function"
+  description   = "Container images for the NowPlaying (last.fm) Cloud Run service"
 
   writer_members = [
-    "serviceAccount:${module.github_ci.service_account_email}",
+    "serviceAccount:${module.now_playing_ci.service_account_email}",
   ]
 
   depends_on = [google_project_service.this, time_sleep.terraform_ci_iam_propagation]
@@ -48,8 +48,28 @@ module "secret" {
     "serviceAccount:${google_service_account.function_runtime.email}",
   ]
   version_manager_members = [
-    "serviceAccount:${module.github_ci.service_account_email}",
+    "serviceAccount:${module.now_playing_ci.service_account_email}",
   ]
+
+  depends_on = [google_project_service.this, time_sleep.terraform_ci_iam_propagation]
+}
+
+module "cloud_run" {
+  source      = "../modules/cloud-run-service"
+  project_id  = var.project_id
+  region      = var.region
+  name        = var.service_name
+  description = "Returns the currently-playing last.fm track for the Cord widget"
+
+  service_account_email = google_service_account.function_runtime.email
+  allow_unauthenticated = true
+
+  environment_variables = {
+    LASTFM_USERNAME = var.lastfm_username
+  }
+  secret_environment_variables = {
+    LASTFM_API_KEY = module.secret.secret_id
+  }
 
   depends_on = [google_project_service.this, time_sleep.terraform_ci_iam_propagation]
 }

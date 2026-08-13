@@ -20,6 +20,8 @@ env:
   WORKLOAD_IDENTITY_PROVIDER: "projects/362369312254/locations/global/workloadIdentityPools/github-actions-pool/providers/github-actions-provider"
   SERVICE_ACCOUNT: "terraform-ci@elliotx.iam.gserviceaccount.com"
   WORKING_DIRECTORY: "last-fm-now-playing"
+  # Public last.fm data, not a secret — plain env var like the others above.
+  TF_VAR_lastfm_username: "ElliotXtreme"
 
 jobs:
   plan:
