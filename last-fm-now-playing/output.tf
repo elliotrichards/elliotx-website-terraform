@@ -1,4 +1,3 @@
-output "function_uri" { value = module.cloud_function.uri }
 output "function_service_account_email" { value = google_service_account.function_runtime.email }
 output "artifact_registry_url" { value = module.artifact_registry.url }
 output "secret_id" { value = module.secret.secret_id }
