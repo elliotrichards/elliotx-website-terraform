@@ -20,7 +20,11 @@ module "now_playing_ci" {
   pool_name   = module.github_oidc_pool.pool_name
   github_repo = var.apps_github_repo
 
-  service_account_id           = "now-playing-ci"
+  # Not "now-playing-ci" (the old module.github_ci's account_id): GCP
+  # soft-deletes service accounts for 30 days after deletion and blocks
+  # recreating the same account_id in that window, so reusing it here would
+  # make this apply fail right after it destroys the old one.
+  service_account_id           = "lastfm-now-playing-ci"
   service_account_display_name = "NowPlaying CI (GitHub Actions)"
 
   # artifactregistry.writer (module.artifact_registry) and
