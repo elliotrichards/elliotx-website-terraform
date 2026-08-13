@@ -52,8 +52,9 @@ variable "cpu" {
 }
 
 variable "memory" {
-  type    = string
-  default = "256Mi"
+  type        = string
+  description = "Cloud Run requires >=512Mi when CPU is always-allocated (the default here)"
+  default     = "512Mi"
 }
 
 variable "min_instance_count" {
