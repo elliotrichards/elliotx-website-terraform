@@ -1,14 +1,9 @@
 locals {
   apis = [
     "cloudresourcemanager.googleapis.com",
-    "cloudfunctions.googleapis.com",
     "run.googleapis.com",
-    "eventarc.googleapis.com",
     "artifactregistry.googleapis.com",
-    "cloudbuild.googleapis.com",
-    "pubsub.googleapis.com",
     "secretmanager.googleapis.com",
-    "storage.googleapis.com",
     "iam.googleapis.com",
   ]
 }
@@ -20,11 +15,7 @@ resource "google_project_service" "this" {
   disable_on_destroy = false
 }
 
-data "google_project" "this" {
-  project_id = var.project_id
-}
-
-# Runtime identity for the Cloud Function — only granted secretAccessor on
+# Runtime identity for the deployed service — only granted secretAccessor on
 # its own secret below, nothing project-wide.
 resource "google_service_account" "function_runtime" {
   project      = var.project_id
@@ -59,25 +50,6 @@ module "secret" {
   version_manager_members = [
     "serviceAccount:${module.github_ci.service_account_email}",
   ]
-
-  depends_on = [google_project_service.this, time_sleep.terraform_ci_iam_propagation]
-}
-
-module "cloud_function" {
-  source      = "../modules/cloud-function"
-  project_id  = var.project_id
-  region      = var.region
-  name        = var.function_name
-  description = "Returns the currently-playing last.fm track for the Cord widget"
-
-  runtime               = "nodejs20"
-  entry_point           = var.function_entry_point
-  service_account_email = google_service_account.function_runtime.email
-  allow_unauthenticated = true
-
-  environment_variables = {
-    LASTFM_SECRET_NAME = module.secret.secret_id
-  }
 
   depends_on = [google_project_service.this, time_sleep.terraform_ci_iam_propagation]
 }

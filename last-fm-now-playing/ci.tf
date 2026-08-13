@@ -30,21 +30,11 @@ resource "google_service_account_iam_member" "github_ci_act_as_function_runtime"
 }
 
 # Terraform itself (running as terraform-ci) also needs actAs on this SA —
-# creating google_cloudfunctions2_function with service_account_email set
-# requires the *caller* to have iam.serviceaccounts.actAs, separate from the
-# grant above which only covers the app repo's own CI-driven redeploys.
+# creating a resource with its runtime identity set to this SA requires the
+# *caller* to have iam.serviceaccounts.actAs, separate from the grant above
+# which only covers the app repo's own CI-driven redeploys.
 resource "google_service_account_iam_member" "terraform_ci_act_as_function_runtime" {
   service_account_id = google_service_account.function_runtime.name
-  role               = "roles/iam.serviceAccountUser"
-  member             = "serviceAccount:${var.terraform_ci_service_account_email}"
-}
-
-# Cloud Functions gen2's underlying build step falls back to the project's
-# default Compute Engine service account unless build_config.service_account
-# is set — which we don't, to avoid re-scoping our own runtime SA into a
-# build identity. So the deployer needs actAs on that default SA too.
-resource "google_service_account_iam_member" "terraform_ci_act_as_compute_default" {
-  service_account_id = "projects/${var.project_id}/serviceAccounts/${data.google_project.this.number}-compute@developer.gserviceaccount.com"
   role               = "roles/iam.serviceAccountUser"
   member             = "serviceAccount:${var.terraform_ci_service_account_email}"
 }
@@ -52,13 +42,6 @@ resource "google_service_account_iam_member" "terraform_ci_act_as_compute_defaul
 # --- Extend the repo-wide terraform-ci SA (../iam.tf) so it can manage the
 # resource types this subfolder introduces. Declared here, not in the root
 # state, to keep this app's infra additions self-contained. ---
-
-resource "google_project_iam_member" "terraform_ci_cloudfunctions_admin" {
-  project    = var.project_id
-  role       = "roles/cloudfunctions.admin"
-  member     = "serviceAccount:${var.terraform_ci_service_account_email}"
-  depends_on = [google_project_service.this]
-}
 
 resource "google_project_iam_member" "terraform_ci_run_admin" {
   project    = var.project_id
@@ -85,15 +68,13 @@ resource "google_project_iam_member" "terraform_ci_secretmanager_admin" {
 # terraform-ci these roles also needs to *use* them (creating the AR repo,
 # the secret, the function) in the same run. Without a buffer, those calls
 # can 403 before the policy has propagated. Anything created below that
-# relies on the four admin roles above depends on this.
+# relies on the admin roles above depends on this.
 resource "time_sleep" "terraform_ci_iam_propagation" {
   create_duration = "60s"
   depends_on = [
-    google_project_iam_member.terraform_ci_cloudfunctions_admin,
     google_project_iam_member.terraform_ci_run_admin,
     google_project_iam_member.terraform_ci_artifactregistry_admin,
     google_project_iam_member.terraform_ci_secretmanager_admin,
     google_service_account_iam_member.terraform_ci_act_as_function_runtime,
-    google_service_account_iam_member.terraform_ci_act_as_compute_default,
   ]
 }
