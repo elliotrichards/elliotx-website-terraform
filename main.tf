@@ -17,9 +17,57 @@ resource "google_compute_backend_bucket" "static_backend" {
   enable_cdn  = true
 }
 
+# elliotx.com/api/contact -> the contact form's Cloud Run service (its own
+# state in ./website-contact-form). Routed through this load balancer so the
+# form posts same-origin: no CORS, and the service's ingress can refuse
+# direct *.run.app traffic. Gated on var.contact_form_enabled because the
+# service is created in a second step (see website-contact-form/variables.tf).
+resource "google_compute_region_network_endpoint_group" "contact_form" {
+  count                 = var.contact_form_enabled ? 1 : 0
+  name                  = "contact-form-neg"
+  network_endpoint_type = "SERVERLESS"
+  region                = var.region
+
+  cloud_run {
+    service = var.contact_form_service_name
+  }
+}
+
+resource "google_compute_backend_service" "contact_form" {
+  count      = var.contact_form_enabled ? 1 : 0
+  name       = "contact-form-backend"
+  protocol   = "HTTPS"
+  enable_cdn = false
+
+  backend {
+    group = google_compute_region_network_endpoint_group.contact_form[0].id
+  }
+}
+
 resource "google_compute_url_map" "url_map" {
   name            = "url-map"
   default_service = google_compute_backend_bucket.static_backend.id
+
+  dynamic "host_rule" {
+    for_each = var.contact_form_enabled ? [1] : []
+    content {
+      hosts        = ["*"]
+      path_matcher = "site"
+    }
+  }
+
+  dynamic "path_matcher" {
+    for_each = var.contact_form_enabled ? [1] : []
+    content {
+      name            = "site"
+      default_service = google_compute_backend_bucket.static_backend.id
+
+      path_rule {
+        paths   = ["/api/contact"]
+        service = google_compute_backend_service.contact_form[0].id
+      }
+    }
+  }
 }
 
 resource "google_compute_target_https_proxy" "https_proxy" {
