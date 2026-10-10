@@ -34,8 +34,8 @@ variable "zone" {
 
 variable "contact_form_enabled" {
   type        = bool
-  description = "Route elliotx.com/api/contact to the contact form's Cloud Run service. Turn on together with create_service in website-contact-form/, once that service exists."
-  default     = false
+  description = "Route elliotx.com/api/contact to the contact form's Cloud Run service (created by website-contact-form/ when its create_service is true)."
+  default     = true
 }
 
 variable "contact_form_service_name" {

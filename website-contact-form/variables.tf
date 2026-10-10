@@ -24,8 +24,8 @@ variable "service_name" {
 
 variable "create_service" {
   type        = bool
-  description = "Create the Cloud Run service. Starts false: Cloud Run refuses to create a revision whose secret env vars have no version yet, and the secret values are added out-of-band after the first apply creates the secret containers. Flip to true once every secret below has a version."
-  default     = false
+  description = "Create the Cloud Run service. Cloud Run refuses to create a revision whose secret env vars have no version yet, so on a fresh project apply with this false first, add the secret values out-of-band, then set it true."
+  default     = true
 }
 
 variable "turnstile_secret_id" {
