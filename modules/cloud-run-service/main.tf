@@ -52,9 +52,16 @@ resource "google_cloud_run_v2_service" "this" {
 
   # CI deploys real images straight to the service, outside Terraform —
   # without this, the next `terraform plan` would try to revert every CI
-  # deploy back to the placeholder image.
+  # deploy back to the placeholder image. `gcloud run deploy` also stamps
+  # client/client_version on the service; ignoring them stops every plan
+  # after a deploy showing an in-place change that only clears that stamp
+  # (and the next deploy re-adding it).
   lifecycle {
-    ignore_changes = [template[0].containers[0].image]
+    ignore_changes = [
+      template[0].containers[0].image,
+      client,
+      client_version,
+    ]
   }
 }
 
