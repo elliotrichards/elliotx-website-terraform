@@ -67,6 +67,12 @@ variable "max_instance_count" {
   default = 3
 }
 
+variable "ingress" {
+  type        = string
+  description = "Who can reach the service: INGRESS_TRAFFIC_ALL, or INGRESS_TRAFFIC_INTERNAL_LOAD_BALANCER to accept requests only via a load balancer (the *.run.app URL then refuses public traffic)"
+  default     = "INGRESS_TRAFFIC_ALL"
+}
+
 variable "allow_unauthenticated" {
   type        = bool
   description = "Grant invoker to allUsers — set false to require IAM auth on invoke"

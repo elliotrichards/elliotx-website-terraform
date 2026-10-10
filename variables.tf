@@ -31,3 +31,15 @@ variable "zone" {
   description = "Default Zone"
   default     = "us-west1-a"
 }
+
+variable "contact_form_enabled" {
+  type        = bool
+  description = "Route elliotx.com/api/contact to the contact form's Cloud Run service. Turn on together with create_service in website-contact-form/, once that service exists."
+  default     = false
+}
+
+variable "contact_form_service_name" {
+  type        = string
+  description = "Cloud Run service name the /api/contact route targets — must match website-contact-form's service_name"
+  default     = "contact-form"
+}
