@@ -16,8 +16,12 @@ resource "google_iam_workload_identity_pool_provider" "this" {
     "attribute.ref"        = "assertion.ref"
   }
 
-  # Only tokens minted for this exact repo can federate in.
-  attribute_condition = "assertion.repository == \"${var.github_repo}\""
+  # Only tokens minted for this exact repo can federate in — and, when
+  # allowed_ref is set, only from that ref (so PR/feature branches can't).
+  attribute_condition = join(" && ", compact([
+    "assertion.repository == \"${var.github_repo}\"",
+    var.allowed_ref != null ? "assertion.ref == \"${var.allowed_ref}\"" : "",
+  ]))
 
   oidc {
     issuer_uri = "https://token.actions.githubusercontent.com"

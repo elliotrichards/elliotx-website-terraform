@@ -24,6 +24,9 @@ module "github_oidc_pool" {
   pool_id     = "website-github-pool"
   provider_id = "website-github-provider"
   github_repo = var.website_github_repo
+  # Only the weekly pull-music-data job uses this pool, and it runs on main
+  # (schedule always does; workflow_dispatch must be started from main).
+  allowed_ref = "refs/heads/main"
 
   depends_on = [google_project_service.this]
 }
