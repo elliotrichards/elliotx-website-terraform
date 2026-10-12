@@ -22,3 +22,9 @@ variable "github_repo" {
   type        = string
   description = "owner/repo allowed to federate via OIDC, e.g. elliotrichards/elliotx-website-apps. Trust is repo-scoped, not path-scoped — every app in this repo shares this pool, each with its own service account (see modules/github-ci-service-account)."
 }
+
+variable "allowed_ref" {
+  type        = string
+  default     = null
+  description = "If set, only OIDC tokens for this exact git ref (e.g. refs/heads/main) can federate in. Leave null when PR jobs also need to authenticate."
+}
