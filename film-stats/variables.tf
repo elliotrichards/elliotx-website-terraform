@@ -24,7 +24,7 @@ variable "service_name" {
 variable "create_service" {
   type        = bool
   description = "Create the Cloud Run service and its Scheduler job. Cloud Run refuses to create a revision whose secret env vars have no version yet, so on a fresh project apply with this false first, add the TMDB token out-of-band, then set it true (same two-step bootstrap as ../website-contact-form)."
-  default     = false
+  default     = true
 }
 
 variable "sheet_id" {
