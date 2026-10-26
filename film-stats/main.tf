@@ -135,7 +135,6 @@ module "cloud_run" {
   environment_variables = {
     SHEET_ID     = var.sheet_id
     SHEET_TAB    = var.sheet_tab
-    SHEET_RANGE  = var.sheet_range
     CACHE_BUCKET = google_storage_bucket.tmdb_cache.name
     STATS_BUCKET = google_storage_bucket.stats_public.name
     TIME_ZONE    = var.schedule_time_zone

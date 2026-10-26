@@ -38,14 +38,9 @@ variable "sheet_id" {
 }
 
 variable "sheet_tab" {
-  type    = string
-  default = "Watch Log"
-}
-
-variable "sheet_range" {
   type        = string
-  description = "A1 range within sheet_tab, excluding the header row"
-  default     = "A2:F"
+  description = "Tab the app reads in full, header row first — columns are matched by header name, so no range is needed"
+  default     = "Watch Log"
 }
 
 variable "site_origin" {
