@@ -101,6 +101,27 @@ resource "google_project_iam_member" "terraform_ci_notification_channel_editor" 
   depends_on = [google_project_service.this]
 }
 
+# A log-match alert policy (main.tf's run_failed) is stored by Cloud Logging
+# as a notification rule, so creating one also needs
+# logging.notificationRules.*, which no Monitoring role includes.
+# configWriter is the narrowest predefined role that has it (terraform-ci
+# can't create a custom role with just those five permissions).
+resource "google_project_iam_member" "terraform_ci_logging_config_writer" {
+  project    = var.project_id
+  role       = "roles/logging.configWriter"
+  member     = "serviceAccount:${var.terraform_ci_service_account_email}"
+  depends_on = [google_project_service.this]
+}
+
+# Separate from terraform_ci_iam_propagation below: that sleep already
+# exists in state, so adding this grant to its depends_on wouldn't make it
+# wait again. A new resource does get created (and waits) on the apply that
+# adds the grant.
+resource "time_sleep" "terraform_ci_logging_iam_propagation" {
+  create_duration = "60s"
+  depends_on      = [google_project_iam_member.terraform_ci_logging_config_writer]
+}
+
 # IAM grants are eventually consistent — the very first apply that grants
 # terraform-ci these roles also needs to *use* them in the same run. Without
 # a buffer, those calls can 403 before the policy has propagated. Anything
