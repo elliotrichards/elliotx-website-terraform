@@ -255,4 +255,6 @@ resource "google_monitoring_alert_policy" "run_failed" {
     content   = "The daily film-stats run failed. Check the Cloud Run logs for service ${var.service_name} (look for \"run failed:\")."
     mime_type = "text/markdown"
   }
+
+  depends_on = [time_sleep.terraform_ci_iam_propagation, time_sleep.terraform_ci_logging_iam_propagation]
 }
