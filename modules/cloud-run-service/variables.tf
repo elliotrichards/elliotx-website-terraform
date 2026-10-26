@@ -78,3 +78,9 @@ variable "allow_unauthenticated" {
   description = "Grant invoker to allUsers — set false to require IAM auth on invoke"
   default     = true
 }
+
+variable "timeout" {
+  type        = string
+  description = "Max request duration, e.g. \"120s\". null keeps Cloud Run's default (300s)."
+  default     = null
+}
