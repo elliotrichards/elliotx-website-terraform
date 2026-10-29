@@ -1,5 +1,5 @@
 output "service_uri" { value = one(module.cloud_run[*].uri) }
-output "public_stats_url" { value = "https://storage.googleapis.com/${google_storage_bucket.stats_public.name}/stats.json" }
+output "public_films_url" { value = "https://storage.googleapis.com/${google_storage_bucket.stats_public.name}/films.json" }
 # Share the watch-log sheet (Viewer) with this address.
 output "runner_service_account_email" { value = google_service_account.runner.email }
 output "scheduler_service_account_email" { value = google_service_account.scheduler.email }
