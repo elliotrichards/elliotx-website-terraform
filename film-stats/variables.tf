@@ -45,7 +45,7 @@ variable "sheet_tab" {
 
 variable "site_origin" {
   type        = string
-  description = "Origin allowed by the public stats bucket's CORS policy, for a client-side fetch of stats.json"
+  description = "Origin allowed by the public stats bucket's CORS policy, for a client-side fetch of films.json"
   default     = "https://elliotx.com"
 }
 

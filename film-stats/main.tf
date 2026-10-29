@@ -84,7 +84,7 @@ resource "google_storage_bucket_iam_member" "runner_cache_admin" {
   member = "serviceAccount:${google_service_account.runner.email}"
 }
 
-# Public on purpose: stats.json is derived from a watch log that's meant to
+# Public on purpose: films.json is derived from a watch log that's meant to
 # be shown on the site anyway (notes are never published — the app drops
 # that column on read). allUsers gets read on this bucket only.
 resource "google_storage_bucket" "stats_public" {
@@ -126,7 +126,7 @@ module "cloud_run" {
   project_id  = var.project_id
   region      = var.region
   name        = var.service_name
-  description = "Reads the film watch-log sheet, enriches it from TMDB, publishes stats.json"
+  description = "Reads the film watch-log sheet, enriches it from TMDB, publishes films.json"
 
   service_account_email = google_service_account.runner.email
   # Private: only the Scheduler SA below can call this.
@@ -137,7 +137,6 @@ module "cloud_run" {
     SHEET_TAB    = var.sheet_tab
     CACHE_BUCKET = google_storage_bucket.tmdb_cache.name
     STATS_BUCKET = google_storage_bucket.stats_public.name
-    TIME_ZONE    = var.schedule_time_zone
   }
   secret_environment_variables = {
     TMDB_API_TOKEN = module.tmdb_token.secret_id
@@ -174,7 +173,7 @@ resource "google_cloud_scheduler_job" "daily_run" {
   project     = var.project_id
   region      = var.region
   name        = "film-stats-daily"
-  description = "Rebuilds stats.json from the film watch-log sheet once a day"
+  description = "Rebuilds films.json from the film watch-log sheet once a day"
   schedule    = var.schedule
   time_zone   = var.schedule_time_zone
   # Just over the service's own 120s timeout, so Scheduler doesn't give up
@@ -222,7 +221,7 @@ resource "google_monitoring_notification_channel" "email" {
 # Scheduler logs every failed attempt (non-2xx from the service, or a
 # timeout) at ERROR. The app returns 500 on any unhandled failure, so this
 # covers both "the job never ran" and "the job ran and broke". Bad sheet
-# rows and TMDB misses are warnings inside stats.json, not failures.
+# rows and TMDB misses are warnings inside films.json, not failures.
 resource "google_monitoring_alert_policy" "run_failed" {
   count        = var.alert_email != "" && var.create_service ? 1 : 0
   project      = var.project_id
