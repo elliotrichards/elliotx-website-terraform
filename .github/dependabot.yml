@@ -1,0 +1,29 @@
+version: 2
+updates:
+  # Every Terraform root (each has its own .terraform.lock.hcl) — add a new
+  # one here alongside each new root folder. modules/ are local and pin no
+  # providers, so they don't need an entry.
+  - package-ecosystem: terraform
+    directories:
+      - /
+      - /film-stats
+      - /last-fm-now-playing
+      - /last-fm-recent-tracks
+      - /website-contact-form
+      - /website-music-data
+    schedule:
+      interval: weekly
+    # One PR for every root at once, so the roots stay on the same versions.
+    groups:
+      providers:
+        patterns:
+          - '*'
+    # google 6 and 7 have breaking changes; move majors by hand, checking the
+    # upgrade guide and a plan in every root.
+    ignore:
+      - dependency-name: hashicorp/google
+        update-types:
+          - version-update:semver-major
+      - dependency-name: hashicorp/google-beta
+        update-types:
+          - version-update:semver-major
