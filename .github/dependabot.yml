@@ -6,6 +6,7 @@ updates:
   - package-ecosystem: terraform
     directories:
       - /
+      - /book-stats
       - /film-stats
       - /last-fm-now-playing
       - /last-fm-recent-tracks
